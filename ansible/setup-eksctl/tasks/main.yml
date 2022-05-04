@@ -1,0 +1,17 @@
+- name: "set kernel name"
+  shell: uname -s
+  register: kname
+
+- name: "install eksctl"
+  unarchive:
+    src: https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_{{ kname.stdout }}_amd64.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+- name: "move binary to /usr/local/bin"
+  become: true
+  copy:
+    src: /tmp/eksctl
+    dest: /usr/local/bin/eksctl
+    remote_src: yes
+    mode: "0777"
