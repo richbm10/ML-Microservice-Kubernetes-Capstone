@@ -39,6 +39,31 @@ jobs:
           command: |
             . venv/bin/activate
             make lint
+  
+  register_image:
+    docker:
+      - image: amazon/aws-cli
+    
+    steps:
+      - run:
+          name: authenticate docker client
+          command: |
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 284052999278.dkr.ecr.us-east-1.amazonaws.com
+      
+      - run:
+          name: build docker image
+          command: |
+            docker build -t ml-microservice-udacity-capstone .
+      
+      - run:
+          name: tag docker image
+          command: |
+            docker tag ml-microservice-udacity-capstone:latest 284052999278.dkr.ecr.us-east-1.amazonaws.com/ml-microservice-udacity-capstone:latest
+      
+      - run:
+          name: push docker image
+          command: |
+            docker push 284052999278.dkr.ecr.us-east-1.amazonaws.com/ml-microservice-udacity-capstone:latest
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -46,3 +71,4 @@ workflows:
   ml-microservice-workflow:
     jobs:
       - build
+      - register_image
