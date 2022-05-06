@@ -14,13 +14,12 @@ jobs:
       
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "./project-ml-microservice-kubernetes/requirements.txt" }}
+            - v1-dependencies-{{ checksum "./requirements.txt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
       
       - run:
           name: install dependencies
-          working_directory: ./project-ml-microservice-kubernetes
           command: |
             python3 -m venv venv
             . venv/bin/activate
@@ -32,12 +31,11 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "./project-ml-microservice-kubernetes/requirements.txt" }}
+          key: v1-dependencies-{{ checksum "./requirements.txt" }}
       
       # run lint!
       - run:
           name: run lint
-          working_directory: ./project-ml-microservice-kubernetes
           command: |
             . venv/bin/activate
             make lint
