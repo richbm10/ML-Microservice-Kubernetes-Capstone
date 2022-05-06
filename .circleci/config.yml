@@ -42,9 +42,20 @@ jobs:
   
   register_image:
     docker:
-      - image: amazon/aws-cli
+      - image: python:3.9.0-alpine
     
     steps:
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update docker-cli
+            pip3 install --upgrade pip
+            pip3 install awscli
+            aws --version
+      
+      - setup_remote_docker:
+          version: 20.10.14
+      
       - run:
           name: authenticate docker client
           command: |
@@ -71,4 +82,5 @@ workflows:
   ml-microservice-workflow:
     jobs:
       - build
-      - register_image
+      - register_image:
+          requires: [build]
