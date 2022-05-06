@@ -45,6 +45,8 @@ jobs:
       - image: python:3.9.0-alpine
     
     steps:
+      - checkout
+      
       - run:
           name: Install dependencies
           command: |
