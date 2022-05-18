@@ -80,7 +80,7 @@ jobs:
   
   set_kubeconfig:
     docker:
-      - image: python:3.9.0-alpine
+      - image: amazon/aws-cli
     
     steps:
       - checkout
@@ -88,19 +88,15 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update docker-cli sudo
             sudo apt-get update
             sudo apt-get install -y apt-transport-https ca-certificates curl
             sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
             echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
             sudo apt-get update
             sudo apt-get install -y kubectl
-            pip3 install --upgrade pip
-            pip3 install awscli
-            aws --version
       
-      - setup_remote_docker:
-          version: 20.10.14
+      # - setup_remote_docker:
+      #     version: 20.10.14
       
       # - run:
       #     name: Current kubeconfig
