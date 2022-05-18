@@ -96,13 +96,13 @@ jobs:
       - setup_remote_docker:
           version: 20.10.14
       
-      - run:
-          name: Current kubeconfig
-          command: cat ~/.kube/config
+      # - run:
+      #     name: Current kubeconfig
+      #     command: cat ~/.kube/config
       
-      - run:
-          name: Remove current kubeconfig
-          command: rm ~/.kube/config
+      # - run:
+      #     name: Remove current kubeconfig
+      #     command: rm ~/.kube/config
       
       - run:
           name: Set new kubeconfig
