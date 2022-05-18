@@ -77,6 +77,40 @@ jobs:
           name: push docker image
           command: |
             docker push 284052999278.dkr.ecr.us-east-1.amazonaws.com/ml-microservice-udacity-capstone:latest
+  
+  set_kubeconfig:
+    docker:
+      - image: python:3.9.0-alpine
+    
+    steps:
+      - checkout
+      
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update docker-cli
+            pip3 install --upgrade pip
+            pip3 install awscli
+            aws --version
+      
+      - setup_remote_docker:
+          version: 20.10.14
+      
+      - run:
+          name: Current kubeconfig
+          command: cat ~/.kube/config
+      
+      - run:
+          name: Remove current kubeconfig
+          command: rm ~/.kube/config
+      
+      - run:
+          name: Set new kubeconfig
+          command: aws eks --region us-east-1 update-kubeconfig --name MLMicroservice
+      
+      - run:
+          name: Test new kubeconfig
+          command: kubectl get svc
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -84,5 +118,6 @@ workflows:
   ml-microservice-workflow:
     jobs:
       - build
+      - set_kubeconfig
       - register_image:
           requires: [build]
