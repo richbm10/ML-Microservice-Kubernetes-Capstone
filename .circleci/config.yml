@@ -131,6 +131,10 @@ jobs:
       #     command: rm ~/.kube/config
       
       - run:
+          name: Current IAM identity
+          command: aws sts get-caller-identity
+      
+      - run:
           name: Set new kubeconfig
           command: aws eks --region us-east-1 update-kubeconfig --name MLMicroservice
       
@@ -143,7 +147,7 @@ jobs:
 workflows:
   ml-microservice-workflow:
     jobs:
-      - deploy_cluster
+      # - deploy_cluster
       - build
       - set_kubeconfig
       - register_image:
