@@ -5,6 +5,28 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
+  deploy_cluster:
+    docker:
+      - image: python:3.9.0-alpine
+    
+    steps:
+      - checkout
+      
+      - run:
+          name: Install dependencies
+          command: |
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/latest_release/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+            sudo mv /tmp/eksctl /usr/local/bin
+            apk add --update ansible
+            ansible --version
+            pip3 install --upgrade pip
+            pip3 install awscli
+            aws --version
+
+      - run:
+          name: run cluster deployment
+          command: ./run_cluster.sh
+  
   build:
     docker:
       - image: python:3.7.3-stretch
@@ -121,6 +143,7 @@ jobs:
 workflows:
   ml-microservice-workflow:
     jobs:
+      - deploy_cluster
       - build
       - set_kubeconfig
       - register_image:
