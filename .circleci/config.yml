@@ -112,12 +112,14 @@ jobs:
           command: |
             sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl less
             sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
             sudo apt-get update
             sudo apt-get install -y kubectl
             unzip awscliv2.zip
             sudo ./aws/install
+            sudo mv /tmp/eksctl /usr/local/bin
       
       # - setup_remote_docker:
       #     version: 20.10.14
@@ -133,6 +135,14 @@ jobs:
       - run:
           name: Current IAM identity
           command: aws sts get-caller-identity
+          
+      - run:
+          name: Create IAM Identity Mapping
+          command: eksctl create iamidentitymapping --cluster  MLMicroservice --region=us-east-1 --arn arn:aws:iam::284052999278:user/udacity-capstone-workflow --group system:masters --username udacity-capstone-workflow
+      
+      - run:
+          name: Get Identity Mapping
+          command: eksctl get iamidentitymapping --cluster MLMicroservice --region=us-east-1 --arn arn:aws:iam::284052999278:user/udacity-capstone-workflow
       
       - run:
           name: Set new kubeconfig
