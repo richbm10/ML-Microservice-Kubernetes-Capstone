@@ -8,10 +8,10 @@ jobs:
   deploy_cluster:
     docker:
       - image: python:3.9.0-alpine
-    
+
     steps:
       - checkout
-      
+
       - run:
           name: Install dependencies
           command: |
@@ -26,20 +26,20 @@ jobs:
       - run:
           name: run cluster deployment
           command: ./run_cluster.sh
-  
+
   build:
     docker:
       - image: python:3.7.3-stretch
-    
+
     steps:
       - checkout
-      
+
       - restore_cache:
           keys:
             - v1-dependencies-{{ checksum "./requirements.txt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-      
+
       - run:
           name: install dependencies
           command: |
@@ -49,26 +49,26 @@ jobs:
             # Install hadolint
             wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.10.0/hadolint-Linux-x86_64 &&\
             chmod +x /bin/hadolint
-      
+
       - save_cache:
           paths:
             - ./venv
           key: v1-dependencies-{{ checksum "./requirements.txt" }}
-      
+
       # run lint!
       - run:
           name: run lint
           command: |
             . venv/bin/activate
             make lint
-  
+
   register_image:
     docker:
       - image: python:3.9.0-alpine
-    
+
     steps:
       - checkout
-      
+
       - run:
           name: Install dependencies
           command: |
@@ -76,37 +76,37 @@ jobs:
             pip3 install --upgrade pip
             pip3 install awscli
             aws --version
-      
+
       - setup_remote_docker:
           version: 20.10.14
-      
+
       - run:
           name: authenticate docker client
           command: |
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 284052999278.dkr.ecr.us-east-1.amazonaws.com
-      
+
       - run:
           name: build docker image
           command: |
             docker build -t ml-microservice-udacity-capstone .
-      
+
       - run:
           name: tag docker image
           command: |
             docker tag ml-microservice-udacity-capstone:latest 284052999278.dkr.ecr.us-east-1.amazonaws.com/ml-microservice-udacity-capstone:latest
-      
+
       - run:
           name: push docker image
           command: |
             docker push 284052999278.dkr.ecr.us-east-1.amazonaws.com/ml-microservice-udacity-capstone:latest
-  
+
   set_kubeconfig:
     docker:
       - image: circleci/node:13.8.0
-    
+
     steps:
       - checkout
-      
+
       - run:
           name: Install dependencies
           command: |
@@ -120,40 +120,67 @@ jobs:
             unzip awscliv2.zip
             sudo ./aws/install
             sudo mv /tmp/eksctl /usr/local/bin
-      
-      # - setup_remote_docker:
-      #     version: 20.10.14
-      
-      # - run:
-      #     name: Current kubeconfig
-      #     command: cat ~/.kube/config
-      
-      # - run:
-      #     name: Remove current kubeconfig
-      #     command: rm ~/.kube/config
-      
+
       - run:
           name: Current IAM identity
           command: aws sts get-caller-identity
-          
-      - run:
-          name: Create IAM Identity Mapping
-          command: eksctl create iamidentitymapping --cluster  MLMicroservice --region=us-east-1 --arn arn:aws:iam::284052999278:user/udacity-capstone-workflow --group system:masters --username udacity-capstone-workflow
-      
-      - run:
-          name: Get Identity Mapping
-          command: eksctl get iamidentitymapping --cluster MLMicroservice --region=us-east-1 --arn arn:aws:iam::284052999278:user/udacity-capstone-workflow
-      
+
       - run:
           name: Set new kubeconfig
           command: aws eks --region us-east-1 update-kubeconfig --name MLMicroservice
-      
+
       - run:
           name: Test new kubeconfig
           command: kubectl get svc
 
+  deploy_latest_container:
+    docker:
+      - image: circleci/node:13.8.0
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl less
+            sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+            echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+            sudo apt-get update
+            sudo apt-get install -y kubectl
+
+      - run:
+          name: Apply deployment to EKS
+          command: kubectl apply -f deployment.yml
+
+      - run:
+          name: List nodes
+          command: kubectl get pods
+
+  create_eks_service:
+    docker:
+      - image: circleci/node:13.8.0
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: |
+            sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl less
+            sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+            echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+            sudo apt-get update
+            sudo apt-get install -y kubectl
+
+      - run:
+          name: Create Service
+          command: kubectl apply -f service.yaml
+
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+# Uncomment deploy_cluster job to create the EKS cluster
+# Uncomment create_eks_service job to make the microservice in EKS reachable
 workflows:
   ml-microservice-workflow:
     jobs:
@@ -162,3 +189,7 @@ workflows:
       - set_kubeconfig
       - register_image:
           requires: [build]
+      - deploy_latest_container:
+          requires: [set_kubeconfig]
+      # - create_eks_service:
+      #     requires: [deploy_latest_container]

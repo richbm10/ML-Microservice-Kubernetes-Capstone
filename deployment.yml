@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-microservice-deployment
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      microservice: python-sklearn-ml
+  template:
+    metadata:
+      labels:
+        microservice: python-sklearn-ml
+    spec:
+      containers:
+        - name: ml-microservice-udacity-capstone
+          image: 284052999278.dkr.ecr.us-east-1.amazonaws.com/ml-microservice-udacity-capstone:latest
+          ports:
+            - containerPort: 80
