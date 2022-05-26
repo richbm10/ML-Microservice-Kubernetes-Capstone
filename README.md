@@ -1,50 +1,46 @@
-<include a CircleCI status badge, here>
+# ML Microservice Udacity Capstone Project
+
+[GitHub Repository](https://github.com/richbm10/ML-Microservice-Kubernetes-Capstone)
 
 ## Project Overview
 
-In this project, you will apply the skills you have acquired in this course to operationalize a Machine Learning Microservice API. 
+This project is a Machine Learning Microservice API, `sklearn` model that has been trained to predict housing prices in Boston according to several features, such as average rooms in a home and data about highway access, teacher-to-pupil ratios, and so on. You can read more about the data, which was initially taken from Kaggle, on [the data source site](https://www.kaggle.com/c/boston-housing).
 
-You are given a pre-trained, `sklearn` model that has been trained to predict housing prices in Boston according to several features, such as average rooms in a home and data about highway access, teacher-to-pupil ratios, and so on. You can read more about the data, which was initially taken from Kaggle, on [the data source site](https://www.kaggle.com/c/boston-housing). This project tests your ability to operationalize a Python flask app—in a provided file, `app.py`—that serves out predictions (inference) about housing prices through API calls. This project could be extended to any pre-trained machine learning model, such as those for image recognition and data labeling.
+### Cluster Deployment
 
-### Project Tasks
+The deployment of the AWS EKS cluster was made by using the [eksctl cli](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html).
 
-Your project goal is to operationalize this working, machine learning microservice using [kubernetes](https://kubernetes.io/), which is an open-source system for automating the management of containerized applications. In this project you will:
-* Test your project code using linting
-* Complete a Dockerfile to containerize this application
-* Deploy your containerized application using Docker and make a prediction
-* Improve the log statements in the source code for this application
-* Configure Kubernetes and create a Kubernetes cluster
-* Deploy a container using Kubernetes and make a prediction
-* Upload a complete Github repo with CircleCI to indicate that your code has been tested
+First to implement the required VPC for our cluster a default Cloudformation template offered by AWS was used. So this was achieved by just going to Cloudformation and create the template using this URL: https://amazon-eks.s3.us-west-2.amazonaws.com/cloudformation/2020-06-10/amazon-eks-vpc-private-subnets.yaml.
 
-You can find a detailed [project rubric, here](https://review.udacity.com/#!/rubrics/2576/view).
+The cluster for this project was deployed by using [this](https://github.com/richbm10/ML-Microservice-Kubernetes-Capstone/tree/main/ansible) Ansible playbook to install the required dependencies and create the cluster
+using the eksctl create command running the [run_cluster](https://github.com/richbm10/ML-Microservice-Kubernetes-Capstone/blob/main/run_cluster.sh) script.
 
-**The final implementation of the project will showcase your abilities to operationalize production microservices.**
-
----
+The cluster creation uses a cluster yml where we declare the required VPC id and subnets ids that were created thanks to the default VPC template provided by AWS.
 
 ## Setup the Environment
 
-* Create a virtualenv with Python 3.7 and activate it. Refer to this link for help on specifying the Python version in the virtualenv. 
+- Create a virtualenv with Python 3.7 and activate it. Refer to this link for help on specifying the Python version in the virtualenv.
+
 ```bash
 python3 -m pip install --user virtualenv
-# You should have Python 3.7 available in your host. 
+# You should have Python 3.7 available in your host.
 # Check the Python path using `which python3`
 # Use a command similar to this one:
 python3 -m virtualenv --python=<path-to-Python3.7> .devops
 source .devops/bin/activate
 ```
-* Run `make install` to install the necessary dependencies
+
+- Run `make install` to install the necessary dependencies
 
 ### Running `app.py`
 
-1. Standalone:  `python app.py`
-2. Run in Docker:  `./run_docker.sh`
-3. Run in Kubernetes:  `./run_kubernetes.sh`
+1. Standalone: `python app.py`
+2. Run in Docker: `./run_docker.sh`
+3. Run in Kubernetes: `./run_kubernetes.sh`
 
 ### Kubernetes Steps
 
-* Setup and Configure Docker locally
-* Setup and Configure Kubernetes locally
-* Create Flask app in Container
-* Run via kubectl
+- Setup and Configure Docker locally
+- Setup and Configure Kubernetes locally
+- Create Flask app in Container
+- Run via kubectl
