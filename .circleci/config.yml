@@ -100,39 +100,6 @@ jobs:
           command: |
             docker push 284052999278.dkr.ecr.us-east-1.amazonaws.com/ml-microservice-udacity-capstone:latest
 
-  set_kubeconfig:
-    docker:
-      - image: circleci/node:13.8.0
-
-    steps:
-      - checkout
-
-      - run:
-          name: Install dependencies
-          command: |
-            sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl less
-            sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-            curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-            sudo apt-get update
-            sudo apt-get install -y kubectl
-            unzip awscliv2.zip
-            sudo ./aws/install
-            sudo mv /tmp/eksctl /usr/local/bin
-
-      - run:
-          name: Current IAM identity
-          command: aws sts get-caller-identity
-
-      - run:
-          name: Set new kubeconfig
-          command: aws eks --region us-east-1 update-kubeconfig --name MLMicroservice
-
-      - run:
-          name: Test new kubeconfig
-          command: kubectl get svc
-
   deploy_latest_container:
     docker:
       - image: circleci/node:13.8.0
@@ -145,9 +112,24 @@ jobs:
           command: |
             sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl less
             sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
             sudo apt-get update
             sudo apt-get install -y kubectl
+            unzip awscliv2.zip
+            sudo ./aws/install
+
+      - run:
+          name: Current IAM identity
+          command: aws sts get-caller-identity
+
+      - run:
+          name: Set new kubeconfig
+          command: aws eks --region us-east-1 update-kubeconfig --name MLMicroservice
+
+      - run:
+          name: Test new kubeconfig
+          command: kubectl get svc
 
       - run:
           name: Apply deployment to EKS
@@ -186,10 +168,9 @@ workflows:
     jobs:
       # - deploy_cluster
       - build
-      - set_kubeconfig
       - register_image:
           requires: [build]
       - deploy_latest_container:
-          requires: [set_kubeconfig, register_image]
+          requires: [register_image]
       # - create_eks_service:
       #     requires: [deploy_latest_container]
