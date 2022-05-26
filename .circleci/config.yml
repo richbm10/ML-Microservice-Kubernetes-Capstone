@@ -190,6 +190,6 @@ workflows:
       - register_image:
           requires: [build]
       - deploy_latest_container:
-          requires: [set_kubeconfig]
+          requires: [set_kubeconfig, register_image]
       # - create_eks_service:
       #     requires: [deploy_latest_container]
