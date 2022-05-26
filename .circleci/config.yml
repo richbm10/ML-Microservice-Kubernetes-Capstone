@@ -137,7 +137,7 @@ jobs:
 
       - run:
           name: List nodes
-          command: kubectl get pods
+          command: kubectl get nodes -o wide
 
   create_eks_service:
     docker:
